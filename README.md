@@ -13,7 +13,8 @@ A small x86 32-bit assembly program that simulates a vending machine coin counte
   Output is shown as `<amount> cents` without leading spaces.
 
 ## Example
-```./vending
+```
+./vending
 Enter a coin (q/Q for quarter, d/D for dime, n/N for nickel): Q
 change:25 cents
 Enter a coin (q/Q for quarter, d/D for dime, n/N for nickel): d
