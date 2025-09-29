@@ -8,6 +8,9 @@ msg:
 coinchoice:
     .ascii "    "
 counter: .long 0
+unit: .ascii " cents\n"
+current: .ascii "change:"
+final: .ascii "end change:"
 .text
 main:
 #   similar to eax = write(1,"\nenter coin choice (q/Q,d/D,n/N):",34)
@@ -29,20 +32,128 @@ main:
 #   if coinchoice == 'Q' jump to add25 to add 25 to counter and print the new value
     cmpb   $'Q',coinchoice
     je     add25
-    jmp    main
+    cmpb   $'d',coinchoice
+    je     add10
+    cmpb   $'D',coinchoice
+    je     add10
+    cmpb   $'n',coinchoice
+    je     add5
+    cmpb   $'N',coinchoice
+    je     add5
+    jmp    call_exit
 add25:
     add    $25,counter
-    # call itoa(counter,itoa_string) - converts the integer in counter to ascii in itoa_string
-    call   itoa		# jump to the label itoa, which will return to next instruction
-    # after calling itoa, print out the counter value in itoa_string
+
     mov    $4,%eax
     mov    $1,%ebx
-    mov    $itoa_string,%ecx
-    mov    $4,%edx
+    mov    $current,%ecx
+    mov    $7,%edx
     int    $0x80
+
+    call   itoa		# jump to the label itoa, which will return to next instruction
+    mov    %edi,%esi   # so now esi has the memory address of the space right before the first digit
+    inc    %esi         # now it is on the memory of the first digit
+
+    lea    itoa_string+4,%eax      #space after last digit
+    mov    %eax,%edx
+    sub    %esi,%edx   #now edx has the exact length of the digit
+    
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    %esi,%ecx    #the first digit is the first buffer
+    int    $0x80
+
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    $unit,%ecx
+    mov    $6,%edx
+    int    $0x80
+
     jmp     main
+add10:
+    add   $10,counter
+
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    $current,%ecx
+    mov    $7,%edx
+    int    $0x80
+
+    call   itoa         # jump to the label itoa, which will return to next instruction
+    mov    %edi,%esi   # so now esi has the memory address of the space right before the first digit
+    inc    %esi         # now it is on the memory of the first digit
+
+    lea    itoa_string+4,%eax      #space after last digit
+    mov    %eax,%edx
+    sub    %esi,%edx   #now edx has the exact length of the digit
+
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    %esi,%ecx    #the first digit is the first buffer
+    int    $0x80
+
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    $unit,%ecx
+    mov    $6,%edx
+    int    $0x80
+
+    jmp    main
+add5:
+    add    $5,counter
+    
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    $current,%ecx
+    mov    $7,%edx
+    int    $0x80
+
+    call   itoa         # jump to the label itoa, which will return to next instruction
+    mov    %edi,%esi   # so now esi has the memory address of the space right before the first digit
+    inc    %esi         # now it is on the memory of the first digit
+
+    lea    itoa_string+4,%eax      #space after last digit
+    mov    %eax,%edx
+    sub    %esi,%edx   #now edx has the exact length of the digit
+
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    %esi,%ecx    #the first digit is the first buffer
+    int    $0x80
+
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    $unit,%ecx
+    mov    $6,%edx
+    int    $0x80
+
+    jmp    main
 # exit here
 call_exit:
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    $final,%ecx
+    mov    $12,%edx
+    int    $0x80
+    
+    mov    %edi,%esi   # so now esi has the memory address of the space right before the first digit
+    inc    %esi         # now it is on the memory of the first digit
+
+    lea    itoa_string+4,%eax      #space after last digit
+    mov    %eax,%edx
+    sub    %esi,%edx   #now edx has the exact length of the digit
+
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    %esi,%ecx    #the first digit is the first buffer
+    int    $0x80
+    
+    mov    $4,%eax
+    mov    $1,%ebx
+    mov    $unit,%ecx
+    mov    $7,%edx
+    int    $0x80
+
     mov    $1,%eax
     mov    $0,%ebx
     int    $0x80
@@ -55,7 +166,7 @@ itoa:
     movl   $0x20202020,itoa_string
 #   point %edi index register to the last byte of itoa_string, think:
 #   char *itoa_string="    ";
-#   char *edi = &itoa_string[3];
+#   char *edi = &itoa_string[1];
     lea    itoa_string+3,%edi
 itoa_loop:
     mov    $0,%edx
